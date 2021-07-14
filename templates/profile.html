@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %} Update Profile-ProductionHub {% endblock %}
+
+{% block content %}
+
+<form action="/profile" method="post">
+    <label for="currentPassword">Current Password: </label>
+    <input name="currentPassword" id="currentPassword" type="password"><br>
+    <label for="newPassword">Enter New Password: </label>
+    <input name="newPassword" id="newPassword" type="password"><br>
+    <label for="confirmNewPassword">Confirm New Password: </label>
+    <input name="confirmNewPassword" id="confirmNewPassword" type="password">
+    <input name="submitLogin" type="submit" value="Submit">
+</form>
+
+
+{% endblock %}d

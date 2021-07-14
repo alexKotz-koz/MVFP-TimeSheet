@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %} Browse {% endblock %}
+
+{% block content %}
+
+<h1> This is the browse option to our production hub website.</h1>
+<p>Feel free to browse through all of our users songs below!</p>
+
+{% for user in users %}
+<h2>{{ user.username }}</h2>
+<table id="table">
+    <th>Song</th>
+    <th>Cover</th>
+    <th>File</th>
+    {% for song in account %}
+        <tr>
+            {% if song.owner_id == user.id %}
+            <td>{{ song.songName }}</td>
+            <td><img src={{song.coverArtFile}} width="50px" height="50px"/></td>
+            <td><audio controls>
+                <source id=source src={{song.songFile}} type="audio/wav">
+            </audio></td>
+                {% if current_user.id == song.owner_id %}
+                    <td><a href="/delete/{{song.id}}">Delete</a></td>
+                {% endif %}
+            {% endif %}
+        </tr>
+    {% endfor %}
+</table>
+{% endfor %}
+    <iframe src="https://open.spotify.com/embed/artist/67otCwDIJBAL4nw8yALkey" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+{% endblock %}

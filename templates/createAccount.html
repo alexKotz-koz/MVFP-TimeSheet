@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %} New User {% endblock %}
+
+{% block content %}
+
+<form action="/createAccount" method="post">
+    <label for="username">Enter Username: </label>
+    <input name="username" id="username" type="text"><br>
+    <label for="password">Enter Password: </label>
+    <input name="password" id="password" type="password"><br>
+     <label for="password2">Re-enter Password</label>
+    <input name="password2" id="password2" type="password"><br>
+    <label for="name">Enter Name: </label>
+    <input name="name" id="name" type="text"><br>
+    <input name="submitLogin" type="submit" value="Create Account">
+
+
+</form>
+
+<a href="/"> Back To Login </a>
+{% endblock %}

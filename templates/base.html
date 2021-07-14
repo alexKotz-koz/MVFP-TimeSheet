@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} {% endblock %}</title>
+    <link href="/static/style.css" rel="stylesheet"/>
+</head>
+<body>
+ <nav>
+        <ul>
+            <li> <a href="/">Login</a> </li>
+            <li> <a href="/home">Home</a></li>
+            <li> <a href="/browse">Browse</a></li>
+            <li> <a href="/upload">Upload</a></li>
+            <li> <a href="/profile">Update Profile</a></li>
+            <li> <a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+{% block content %}
+
+{% endblock %}
+
+</body>
+</html>

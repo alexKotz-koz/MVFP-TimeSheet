@@ -1,0 +1,50 @@
+body{
+    background-image: url(/static/background.png);
+}
+label{
+    color: white;
+    text-align: center;
+}
+button{
+   color: black;
+}
+
+input{
+    color: black;
+}
+
+input.text {
+    color: white;
+}
+
+th{
+    color: white;
+}
+td{
+    color: white;
+}
+
+p{
+    color: white;
+}
+
+h1, h2{
+    color:white;
+}
+
+a{
+    text-align: center;
+    color: yellow;
+}
+
+nav ul{
+    list-style-type: none;
+}
+nav ul li{
+    display: inline;
+    padding: 20px;
+}
+
+table{
+    display: table;
+}

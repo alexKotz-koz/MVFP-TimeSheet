@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
+
+<form action="/" method="post">
+    <label for="username">Username: </label>
+    <input name="username" id="username" type="text"><br>
+    <label for="password">Password: </label>
+    <input name="password" id="password" type="password"><br>
+    <input name="submitLogin" type="submit" value="Login">
+</form>
+{% if request.method == "POST" %}
+<a href="login.html"></a>
+
+{% endif %}
+<a href="/createAccount"> Create Account? </a>
+{% endblock %}
