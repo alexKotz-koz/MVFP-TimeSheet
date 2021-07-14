@@ -3,7 +3,7 @@ from random import *
 
 from datetime import datetime
 
-from flask import Flask, request, render_template, redirect, flash, url_for, send_file, jsonify
+from flask import Flask, request, render_template, redirect, session, flash, url_for, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -106,19 +106,23 @@ def createAccount():
 @app.route('/home', methods=['GET', 'POST'])
 @login_required
 def home():
-    clockedIn = False
-    currentTime = datetime.now()
-    clockInTime = 0
-    clock = request.form['clock']
-    timesheet = request.form['timesheet']
     user = current_user.username
     account = Account.query.filter_by(owner_id=current_user.id)
-    if clockedIn==False:
-        clockedIn = True
-        currentTime = clockInTime
+    name = current_user.name
+    if request.method == 'POST':
+        clockedIn = False
+        currentTime = datetime.now().time()
+        clockInTime = 0
+        clock = request.form['clock']
+        #timesheet = request.form['timesheet']
+        if clockedIn==False:
+            clockedIn = True
+            clockInTime = currentTime
+            print("Current Time =", clockInTime)
 
 
-    return render_template('home.html', user=user, account=account)
+
+    return render_template('home.html', user=user, account=account, name=name)
 
 @app.route('/browse')
 def browse():
@@ -128,46 +132,6 @@ def browse():
     account = Account.query.all()
 
     return render_template('browse.html', users=users, account=account)
-
-@app.route('/upload', methods=['GET', 'POST'])
-@login_required
-def upload():
-    db.create_all()
-    if request.method == 'POST':
-        songname = request.form['songName']
-        songfile = request.files['songfile']
-        coverartfile = request.files['coverartfile']
-        songfilename = secure_filename(songfile.filename)
-        coverartfilename = secure_filename(coverartfile.filename)
-        if songname == "":
-            return redirect('/upload')
-        try:
-            pathS = "static/song"
-            fullPathS = os.path.join(pathS, songfilename)
-            songfile.save(fullPathS)
-        except:
-            return redirect('/upload')
-
-        try:
-            pathC = "static/cover"
-            fullPathC = os.path.join(pathC, coverartfilename)
-            coverartfile.save(fullPathC)
-        except:
-            return redirect('/upload')
-        newEntry = Account(owner_id=current_user.id, songName=songname, songFile=fullPathS, coverArtFile=fullPathC)
-
-        db.session.add(newEntry)
-        db.session.commit()
-        return redirect('/home')
-    return render_template('upload.html')
-
-
-@app.route('/delete/<id>', methods=['POST', 'GET'])
-def delete(id):
-    id = Account.query.filter_by(id=id).first()
-    db.session.delete(id)
-    db.session.commit()
-    return redirect('/home')
 
 
 @app.route('/profile', methods=['POST', 'GET'])
@@ -193,42 +157,6 @@ def profile():
     redirect('/')
     return render_template('profile.html')
 
-
-@app.route('/all.json')
-def createJSON():
-    songs = Account.query.all()
-    songNames = []
-    songFiles = []
-    coverArtFiles = []
-    for song in songs:
-        songNames.append(song.songName)
-        songFiles.append("http://10.0.2.2:5000/getSong/" + str(song.id))
-        coverArtFiles.append("http://10.0.2.2:5000/getCover/" + str(song.id))
-    return jsonify(songName=songNames, songFile=songFiles, coverArt=coverArtFiles)
-
-
-@app.route('/getSong/<id>')
-def getSongFile(id):
-    songs = Account.query.all()
-    id = Account.query.filter_by(id=id).first()
-    for song in songs:
-        return send_file(id.songFile)
-
-
-@app.route('/getCover/<id>')
-def getCoverFile(id):
-    covers = Account.query.all()
-    id = Account.query.filter_by(id=id).first()
-    for cover in covers:
-        return send_file(id.coverArtFile)
-
-
-@app.route('/getSongName/<id>')
-def getSongFileName(id):
-    songNames = Account.query.all()
-    id = Account.query.filter_by(id=id).first()
-    for songName in songNames:
-        return id.songName
 
 @app.errorhandler(404)
 def error(err):
