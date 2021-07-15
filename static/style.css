@@ -1,8 +1,9 @@
 body{
-    background-image: url(/static/background.png);
+    background-color: black;
+    background-image: url(/static/MVFPBG.png)
 }
 label{
-    color: white;
+    color: black;
     text-align: center;
 }
 button{
@@ -14,27 +15,27 @@ input{
 }
 
 input.text {
-    color: white;
+    color: black;
 }
 
 th{
-    color: white;
+    color: black;
 }
 td{
-    color: white;
+    color: black;
 }
 
 p{
-    color: white;
+    color: black;
 }
 
 h1, h2{
-    color:white;
+    color:black;
 }
 
 a{
     text-align: center;
-    color: yellow;
+    color: black;
 }
 
 nav ul{

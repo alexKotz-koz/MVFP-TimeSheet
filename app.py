@@ -1,7 +1,7 @@
 import os
 from random import *
 
-from datetime import datetime
+from datetime import datetime, time, date
 
 from flask import Flask, request, render_template, redirect, session, flash, url_for, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -10,20 +10,15 @@ from werkzeug.utils import secure_filename
 from flask_json import FlaskJSON, json_response
 from flask_hashing import Hashing
 
-UPLOAD_FOLDER_SONG = '~/static/song'
-UPLOAD_FOLDER_COVER = '~/static/cover'
-ALLOWED_EXTENSIONS = {'wav', 'mp3'}
-
 app = Flask(__name__, static_url_path="/static")
 hashing = Hashing(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER_SONG'] = UPLOAD_FOLDER_SONG
-app.config['UPLOAD_FOLDER_COVER'] = UPLOAD_FOLDER_COVER
 db = SQLAlchemy(app)
 
 json = FlaskJSON(app)
 json.init_app(app)
+
 
 
 def generate_SK():
@@ -49,11 +44,10 @@ class Users(UserMixin, db.Model):
 
 class Account(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    songName = db.Column(db.String(40))
-    songFile = db.Column(db.String(100))
-    coverArtFile = db.Column(db.String(100))
-    jsonObject = db.Column(db.String(800))
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    clockInEntry = db.Column(db.TIME)
+    clockOutEntry = db.Column(db.TIME)
+    date = db.Column(db.DATE)
 
 
 @login_manager.user_loader
@@ -64,6 +58,7 @@ def load_user(uid):
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    db.create_all()
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -72,7 +67,10 @@ def login():
         if user != None:
             if hash == user.password:
                 login_user(user)
+                session['username'] = username
                 return redirect('/home')
+            else:
+                return "<h1>Username/Password combination invalid, please try again</h1>"
 
     return render_template('login.html')
 
@@ -103,26 +101,45 @@ def createAccount():
     return render_template('createAccount.html')
 
 
-@app.route('/home', methods=['GET', 'POST'])
+@app.route('/home', methods=['GET','POST'])
 @login_required
 def home():
     user = current_user.username
     account = Account.query.filter_by(owner_id=current_user.id)
     name = current_user.name
+
+
     if request.method == 'POST':
-        clockedIn = False
         currentTime = datetime.now().time()
         clockInTime = 0
-        clock = request.form['clock']
-        #timesheet = request.form['timesheet']
-        if clockedIn==False:
-            clockedIn = True
+        clockOutTime = 0
+        #todayEntry = Account(owner_id=current_user.id, date=date)
+        #db.session.add(todayEntry)
+        #db.session.commit()
+        currentDate = date.today()
+        # timesheet = request.form['timesheet']
+        if request.form['clock'] == 'clockInButton':
+            session['clockedIn'] = True
             clockInTime = currentTime
+            newClockInEntry = Account(owner_id=current_user.id, clockInEntry=clockInTime, date=currentDate)
+            db.session.add(newClockInEntry)
+            db.session.commit()
+            print(session['clockedIn'])
+            print(session['username'])
+            return redirect('/home')
+        elif request.form['clock'] == 'clockOutButton':
+            session['clockedIn'] = False
+            clockOutTime = currentTime
+            newClockOutEntry = Account(owner_id=current_user.id, clockOutEntry=clockOutTime, date=currentDate)
+            db.session.add(newClockOutEntry)
+            db.session.commit()
             print("Current Time =", clockInTime)
-
-
+            print(session['clockedIn'])
+            print(session['username'])
+            return redirect('/home')
 
     return render_template('home.html', user=user, account=account, name=name)
+
 
 @app.route('/browse')
 def browse():
