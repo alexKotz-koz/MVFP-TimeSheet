@@ -1,6 +1,8 @@
 body{
-    background-color: black;
-    background-image: url(/static/MVFPBG.png)
+    background-image: url(/static/BG.png);
+    background-repeat:no-repeat;
+    background-position-y: top;
+    background-position-x: top;
 }
 label{
     color: black;

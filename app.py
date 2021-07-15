@@ -1,7 +1,7 @@
 import os
 from random import *
 
-from datetime import datetime, time, date
+from datetime import datetime, time, date, timedelta
 
 from flask import Flask, request, render_template, redirect, session, flash, url_for, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -27,7 +27,6 @@ def generate_SK():
     random_string = "".join(choice(characters) for x in range(256))
     return random_string
 
-
 random_SKstring = generate_SK()
 app.config['SECRET_KEY'] = random_SKstring
 login_manager = LoginManager(app)
@@ -45,8 +44,8 @@ class Users(UserMixin, db.Model):
 class Account(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    clockInEntry = db.Column(db.TIME)
-    clockOutEntry = db.Column(db.TIME)
+    clockInEntry = db.Column(db.String(8))
+    clockOutEntry = db.Column(db.String(8))
     date = db.Column(db.DATE)
 
 
@@ -108,35 +107,45 @@ def home():
     account = Account.query.filter_by(owner_id=current_user.id)
     name = current_user.name
 
-
     if request.method == 'POST':
         currentTime = datetime.now().time()
-        clockInTime = 0
-        clockOutTime = 0
-        #todayEntry = Account(owner_id=current_user.id, date=date)
-        #db.session.add(todayEntry)
-        #db.session.commit()
         currentDate = date.today()
+
+        def ceil_dt(dt, delta):
+            return dt + (datetime.min - dt) % delta
+
+        clockInTime = ceil_dt(datetime.now(),timedelta(minutes=15))
+        clockInTime = str(clockInTime)
+        clockInTime.split(" ")
+        clockInTime = clockInTime[11:]
+
+        clockOutTime = ceil_dt(datetime.now(), timedelta(minutes=15))
+        clockOutTime = str(clockOutTime)
+        clockOutTime.split(" ")
+        clockOutTime = clockOutTime[11:]
+
         # timesheet = request.form['timesheet']
         if request.form['clock'] == 'clockInButton':
-            session['clockedIn'] = True
-            clockInTime = currentTime
-            newClockInEntry = Account(owner_id=current_user.id, clockInEntry=clockInTime, date=currentDate)
-            db.session.add(newClockInEntry)
-            db.session.commit()
-            print(session['clockedIn'])
-            print(session['username'])
-            return redirect('/home')
+            if not session.get('clockedIn'):
+                session['clockedIn'] = True
+                newClockInEntry = Account(owner_id=current_user.id, clockInEntry=clockInTime, date=currentDate)
+                db.session.add(newClockInEntry)
+                db.session.commit()
+                print(session['clockedIn'])
+                print(session['username'])
+                return redirect('/home')
         elif request.form['clock'] == 'clockOutButton':
-            session['clockedIn'] = False
-            clockOutTime = currentTime
-            newClockOutEntry = Account(owner_id=current_user.id, clockOutEntry=clockOutTime, date=currentDate)
-            db.session.add(newClockOutEntry)
-            db.session.commit()
-            print("Current Time =", clockInTime)
-            print(session['clockedIn'])
-            print(session['username'])
-            return redirect('/home')
+            if session['clockedIn'] == True:
+                session['clockedIn'] = False
+                newClockOutEntry = Account(owner_id=current_user.id, clockOutEntry=clockOutTime, date=currentDate)
+                db.session.add(newClockOutEntry)
+                db.session.commit()
+                print("Current Time =", clockInTime)
+                print(session['clockedIn'])
+                print(session['username'])
+                return redirect('/home')
+            else:
+                return '<p> Error already clocked out </p>'
 
     return render_template('home.html', user=user, account=account, name=name)
 
@@ -187,3 +196,4 @@ def error(err):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
