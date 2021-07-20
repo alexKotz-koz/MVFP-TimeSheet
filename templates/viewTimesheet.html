@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %} Home {% endblock %}
+
+{% block content %}
+
+<table id="timesheetTable">
+  {% for entry in account %}
+  <th>
+    Clock In
+  </th>
+  <th>
+    Clock Out
+  </th>
+  <th>
+    Date
+  </th>
+  <th>
+    Total
+  </th>
+  <tr>
+    {% if user.id == account.owner_id %}
+    <td>{{ entry.clockInEntry }}</td>
+    {% endif %}
+    <td>{{ entry.clockOutEntry }}</td>
+    <td>{{ entry.date }}</td>
+
+
+  </tr>
+  {% endfor %}
+</table>
+
+
+
+{% endblock %}

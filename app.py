@@ -5,6 +5,7 @@ from datetime import datetime, time, date, timedelta
 
 from flask import Flask, request, render_template, redirect, session, flash, url_for, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import insert
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from flask_json import FlaskJSON, json_response
@@ -20,12 +21,12 @@ json = FlaskJSON(app)
 json.init_app(app)
 
 
-
 def generate_SK():
     import string
     characters = string.ascii_letters + string.punctuation + string.digits
     random_string = "".join(choice(characters) for x in range(256))
     return random_string
+
 
 random_SKstring = generate_SK()
 app.config['SECRET_KEY'] = random_SKstring
@@ -47,6 +48,7 @@ class Account(db.Model):
     clockInEntry = db.Column(db.String(8))
     clockOutEntry = db.Column(db.String(8))
     date = db.Column(db.DATE)
+    # rowTotal = db.Column(db.TIMESTAMP)
 
 
 @login_manager.user_loader
@@ -69,8 +71,10 @@ def login():
                 session['username'] = username
                 return redirect('/home')
             else:
-                return "<h1>Username/Password combination invalid, please try again</h1>"
-
+                return render_template('login.html','<script>alert("Username/Password combination invalid, please try again");')
+        else:
+            flash("Username/password combination incorrect")
+            return redirect('/')
     return render_template('login.html')
 
 
@@ -100,64 +104,65 @@ def createAccount():
     return render_template('createAccount.html')
 
 
-@app.route('/home', methods=['GET','POST'])
+@app.route('/home', methods=['GET', 'POST'])
 @login_required
 def home():
     user = current_user.username
     account = Account.query.filter_by(owner_id=current_user.id)
     name = current_user.name
 
+    def ceil_dt(dt, delta):
+        return dt + (datetime.min - dt) % delta
+
+    clockInTime = ceil_dt(datetime.now(), timedelta(minutes=15))
+    diffClockInTime = clockInTime
+    clockInTime = str(clockInTime)
+    clockInTime.split(" ")
+    clockInTime = clockInTime[11:]
+
+    clockOutTime = ceil_dt(datetime.now(), timedelta(minutes=15))
+    diffClockOutTime = clockOutTime
+    clockOutTime = str(clockOutTime)
+    clockOutTime.split(" ")
+    clockOutTime = clockOutTime[11:]
+
     if request.method == 'POST':
         currentTime = datetime.now().time()
         currentDate = date.today()
-
-        def ceil_dt(dt, delta):
-            return dt + (datetime.min - dt) % delta
-
-        clockInTime = ceil_dt(datetime.now(),timedelta(minutes=15))
-        clockInTime = str(clockInTime)
-        clockInTime.split(" ")
-        clockInTime = clockInTime[11:]
-
-        clockOutTime = ceil_dt(datetime.now(), timedelta(minutes=15))
-        clockOutTime = str(clockOutTime)
-        clockOutTime.split(" ")
-        clockOutTime = clockOutTime[11:]
-
         # timesheet = request.form['timesheet']
         if request.form['clock'] == 'clockInButton':
             if not session.get('clockedIn'):
                 session['clockedIn'] = True
-                newClockInEntry = Account(owner_id=current_user.id, clockInEntry=clockInTime, date=currentDate)
-                db.session.add(newClockInEntry)
-                db.session.commit()
-                print(session['clockedIn'])
-                print(session['username'])
-                return redirect('/home')
+                session['tempClockIn'] = clockInTime
         elif request.form['clock'] == 'clockOutButton':
+            if not session.get('clockedIn'):
+                flash("No Clock In Time")
+                return redirect('/home')
             if session['clockedIn'] == True:
                 session['clockedIn'] = False
-                newClockOutEntry = Account(owner_id=current_user.id, clockOutEntry=clockOutTime, date=currentDate)
+                rowTotal = diffClockOutTime - diffClockInTime
+                if session['tempClockIn'] == clockOutTime:
+                                                                                    #Uncomment When completed
+                    #flash("Invalid Time Entry")
+
+                                                                                    #Uncomment when complete
+                    return redirect('/home')
+                newClockOutEntry = Account(owner_id=current_user.id, clockInEntry=session['tempClockIn'],
+                                           clockOutEntry=clockOutTime, date=currentDate)
                 db.session.add(newClockOutEntry)
                 db.session.commit()
-                print("Current Time =", clockInTime)
-                print(session['clockedIn'])
-                print(session['username'])
-                return redirect('/home')
-            else:
-                return '<p> Error already clocked out </p>'
-
-    return render_template('home.html', user=user, account=account, name=name)
+                return redirect('/timesheet')
+    return render_template('home.html', user=user, account=account, name=name, clockInTime=clockInTime)
 
 
-@app.route('/browse')
-def browse():
-    users = Users.query.all()
-    account = ""
+@app.route('/timesheet', methods=['POST', 'GET'])
+@login_required
+def timesheet():
+    user = Account.query.all()
+    account = Account.query.filter_by(owner_id=current_user.id)
+    name = current_user.name
 
-    account = Account.query.all()
-
-    return render_template('browse.html', users=users, account=account)
+    return render_template('viewTimesheet.html', user=user, account=account, name=name)
 
 
 @app.route('/profile', methods=['POST', 'GET'])
@@ -196,4 +201,3 @@ def error(err):
 
 if __name__ == '__main__':
     app.run(debug=True)
-

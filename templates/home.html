@@ -4,17 +4,27 @@
 
 {% block content %}
 
+{% with messages = get_flashed_messages() %}
+   {% if messages %}
+      {% for message in messages %}
+         {{ message }}
+      {% endfor %}
+   {% endif %}
+{% endwith %}
+
 <h1> {{ name }}'s Timesheet</h1>
 <p>To Clock In/ Out please click "Clock In/Out" Button.</p>
 <p>To view and edit Timesheet please click "View/Edit Timesheet" Button</p>
 <form action="/home" method="post">
     <button name="clock" value="clockInButton">Clock In</button>
     <button name="clock" value="clockOutButton">Clock Out</button>
-    <h6> {{ clockInTime }} </h6>
+
     <!--<button name="timesheet" id="timesheet">View/Edit Timesheet</button>
 --></form>
 
-
+   {% if request.method == 'POST' %}
+        <h3>{{ name }} clocked in at: {{ clockInTime }}</h3>
+    {% endif %}
 
 
 {% endblock %}
