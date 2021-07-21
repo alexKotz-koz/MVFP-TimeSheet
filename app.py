@@ -1,4 +1,5 @@
 import os
+import time
 from random import *
 
 from datetime import datetime, time, date, timedelta
@@ -33,7 +34,6 @@ app.config['SECRET_KEY'] = random_SKstring
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 
-
 class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
@@ -48,7 +48,7 @@ class Account(db.Model):
     clockInEntry = db.Column(db.String(8))
     clockOutEntry = db.Column(db.String(8))
     date = db.Column(db.DATE)
-    # rowTotal = db.Column(db.TIMESTAMP)
+    rowTotal = db.Column(db.TIME)
 
 
 @login_manager.user_loader
@@ -65,7 +65,7 @@ def login():
         password = request.form['password']
         hash = hashing.hash_value(password, salt='5gz')
         user = Users.query.filter_by(username=username).first()
-        if user != None:
+        if user is not None:
             if hash == user.password:
                 login_user(user)
                 session['username'] = username
@@ -115,16 +115,16 @@ def home():
         return dt + (datetime.min - dt) % delta
 
     clockInTime = ceil_dt(datetime.now(), timedelta(minutes=15))
-    diffClockInTime = clockInTime
     clockInTime = str(clockInTime)
     clockInTime.split(" ")
     clockInTime = clockInTime[11:]
 
     clockOutTime = ceil_dt(datetime.now(), timedelta(minutes=15))
-    diffClockOutTime = clockOutTime
     clockOutTime = str(clockOutTime)
     clockOutTime.split(" ")
     clockOutTime = clockOutTime[11:]
+
+
 
     if request.method == 'POST':
         currentTime = datetime.now().time()
@@ -140,13 +140,11 @@ def home():
                 return redirect('/home')
             if session['clockedIn'] == True:
                 session['clockedIn'] = False
-                rowTotal = diffClockOutTime - diffClockInTime
-                if session['tempClockIn'] == clockOutTime:
+                #if session['tempClockIn'] == clockOutTime:
                                                                                     #Uncomment When completed
                     #flash("Invalid Time Entry")
-
                                                                                     #Uncomment when complete
-                    return redirect('/home')
+                    #return redirect('/home')
                 newClockOutEntry = Account(owner_id=current_user.id, clockInEntry=session['tempClockIn'],
                                            clockOutEntry=clockOutTime, date=currentDate)
                 db.session.add(newClockOutEntry)
@@ -161,8 +159,28 @@ def timesheet():
     user = Account.query.all()
     account = Account.query.filter_by(owner_id=current_user.id)
     name = current_user.name
+    clockInEntries = []
+    clockOutEntries = []
+    individualClockInEntry = Account.query.filter_by(owner_id=current_user.id)
+    individualClockOutEntry = Account.query.filter_by(owner_id=current_user.id)
 
-    return render_template('viewTimesheet.html', user=user, account=account, name=name)
+    #for clock in individualClockInEntry:
+     #   convertedClockInTime = datetime.strptime(clock.clockInEntry, '%H:%M:%S')
+      #  clockInEntries.append(convertedClockInTime)
+       # print(convertedClockInTime)
+
+    #for clock in individualClockOutEntry:
+     #   convertedClockOutTime = datetime.strptime(clock.clockOutEntry, '%H:%M:%S')
+      #  clockOutEntries.append(convertedClockOutTime)
+
+        #print(convertedClockOutTime)
+
+    #for i in account:
+     #   td = clockOutEntries[i] - clockInEntries[i]
+      #  td_mins = int(round(td.total_seconds() / 60))
+       # rowTotal = td_mins
+
+    return render_template('viewTimesheet.html', user=user, account=account, name=name) #rowTotal=rowTotal)
 
 
 @app.route('/profile', methods=['POST', 'GET'])
