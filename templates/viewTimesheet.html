@@ -6,6 +6,8 @@
 
 <table id="timesheetTable">
   {% for entry in account %}
+  {% set i=0 %}
+
   <th>
     Clock In
   </th>
@@ -24,9 +26,12 @@
     {% endif %}
     <td>{{ entry.clockOutEntry }}</td>
     <td>{{ entry.date }}</td>
-
-
+    <!--{% for i in rowTotal %}
+    <td>{{ i }}</td>
+    {% endfor %}-->
+    <td>{{ rowTotal[i] }}</td>
   </tr>
+  {% set i = i+1 %}
   {% endfor %}
 </table>
 

@@ -34,6 +34,7 @@ app.config['SECRET_KEY'] = random_SKstring
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 
+
 class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
@@ -48,7 +49,7 @@ class Account(db.Model):
     clockInEntry = db.Column(db.String(8))
     clockOutEntry = db.Column(db.String(8))
     date = db.Column(db.DATE)
-    rowTotal = db.Column(db.TIME)
+    rowTotal = db.Column(db.String(12))
 
 
 @login_manager.user_loader
@@ -71,7 +72,8 @@ def login():
                 session['username'] = username
                 return redirect('/home')
             else:
-                return render_template('login.html','<script>alert("Username/Password combination invalid, please try again");')
+                flash('Username/Password Combination Incorrect')
+                return redirect('/')
         else:
             flash("Username/password combination incorrect")
             return redirect('/')
@@ -110,21 +112,23 @@ def home():
     user = current_user.username
     account = Account.query.filter_by(owner_id=current_user.id)
     name = current_user.name
+    rowTotal = 3000
 
     def ceil_dt(dt, delta):
         return dt + (datetime.min - dt) % delta
 
     clockInTime = ceil_dt(datetime.now(), timedelta(minutes=15))
+
+    clockInTime1 = str(datetime.now())
     clockInTime = str(clockInTime)
     clockInTime.split(" ")
     clockInTime = clockInTime[11:]
 
     clockOutTime = ceil_dt(datetime.now(), timedelta(minutes=15))
+    clockOutTime1 = str(datetime.now())
     clockOutTime = str(clockOutTime)
     clockOutTime.split(" ")
     clockOutTime = clockOutTime[11:]
-
-
 
     if request.method == 'POST':
         currentTime = datetime.now().time()
@@ -140,11 +144,12 @@ def home():
                 return redirect('/home')
             if session['clockedIn'] == True:
                 session['clockedIn'] = False
-                #if session['tempClockIn'] == clockOutTime:
-                                                                                    #Uncomment When completed
-                    #flash("Invalid Time Entry")
-                                                                                    #Uncomment when complete
-                    #return redirect('/home')
+                # if session['tempClockIn'] == clockOutTime:
+                # Uncomment When completed
+                # flash("Invalid Time Entry")
+                # Uncomment when complete
+                # return redirect('/home')
+
                 newClockOutEntry = Account(owner_id=current_user.id, clockInEntry=session['tempClockIn'],
                                            clockOutEntry=clockOutTime, date=currentDate)
                 db.session.add(newClockOutEntry)
@@ -164,23 +169,22 @@ def timesheet():
     individualClockInEntry = Account.query.filter_by(owner_id=current_user.id)
     individualClockOutEntry = Account.query.filter_by(owner_id=current_user.id)
 
-    #for clock in individualClockInEntry:
-     #   convertedClockInTime = datetime.strptime(clock.clockInEntry, '%H:%M:%S')
-      #  clockInEntries.append(convertedClockInTime)
-       # print(convertedClockInTime)
+    diff = []
 
-    #for clock in individualClockOutEntry:
-     #   convertedClockOutTime = datetime.strptime(clock.clockOutEntry, '%H:%M:%S')
-      #  clockOutEntries.append(convertedClockOutTime)
+    def __datetime(date_str):
+        return datetime.strptime(date_str, '%H:%M:%S')
 
-        #print(convertedClockOutTime)
+    for i in account:
+        start = __datetime(i.clockInEntry)
+        end = __datetime(i.clockOutEntry)
 
-    #for i in account:
-     #   td = clockOutEntries[i] - clockInEntries[i]
-      #  td_mins = int(round(td.total_seconds() / 60))
-       # rowTotal = td_mins
+        delta = end - start
 
-    return render_template('viewTimesheet.html', user=user, account=account, name=name) #rowTotal=rowTotal)
+        delta = str(delta)
+        diff.append(delta)
+        print(diff)
+
+    return render_template('viewTimesheet.html', user=user, account=account, name=name, rowTotal=diff)  # rowTotal=rowTotal)
 
 
 @app.route('/profile', methods=['POST', 'GET'])
